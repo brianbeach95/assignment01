@@ -25,28 +25,47 @@ struct employees {
     char empID[16];
     char name[64];  //name of employee
     char title[64]; //title of employee
+    int isEmp;      //bool for if is employee
 };
 
 
 
 //menu to use to ask user if they want to search and to get input details
-void menu(struct employees empArray[arrayNum]) {
+void menu(char **name, char **title, int length) {
 
     char search[20];    //string to see if user wants to search for details
-    
+
+    char nameInput[64];
+    char titleInput[64];
+
     printf("Do you want to search for employee details? Yes/no: ");
     scanf("%s",search);
 
     //while loop to run while the user wants to search for employees
-    while((strcasecmp(search, "yes") == 0) && (numSearched < arrayNum)) {
+    while(strcasecmp(search, "yes") == 0) {
+        //if the number searched is longer than length, multiply length by 2 and realloc the two arrays
+       /**
+        if(numSearched == length) {
+            length *= 2;
+            name = realloc(name, length );
+            title = realloc(title, length );
+        }
+        */
+
         printf("\n");
         printf("Enter employee name: ");
         
-        scanf(" %149[^\n]", empArray[numSearched].name);    //user input to name
-        printf("\n");
+        scanf(" %149[^\n]", nameInput);  
+        name[numSearched] = malloc(64 * sizeof(char));
+        strcpy(name[numSearched], nameInput);
+        printf("%s\n", name[numSearched]);
+
+
         printf("Enter title: ");
-        
-        scanf(" %149[^\n]", empArray[numSearched].title);   //user input to title
+        scanf(" %149[^\n]", titleInput);
+        title[numSearched] = malloc(64 * sizeof(char));
+        strcpy(title[numSearched], titleInput);   //user input to title
+        printf("%s\n", title[numSearched]);
 
         numSearched++;  //add 1 to num searched to keep track of position in array
 
@@ -60,10 +79,16 @@ void menu(struct employees empArray[arrayNum]) {
 int main() {
     
     int i;  //used in for loop
+    int length = 2;
 
-    //make struct array of 10. Only allows 10 max searches in one go
-    struct employees empArray[arrayNum];
-    menu(empArray);
+    char **nameArray= (char**) malloc(length * sizeof(char*));
+    char **titleArray = (char**) malloc(length * sizeof(char*));
+    
+    menu(nameArray, titleArray, length);
+
+    printf("test");
+
+    struct employees empArray[numSearched];
 
     /*TEST --- for loop to test if menu is working properly
     for (i = 0; i < numSearched; i++) {
@@ -92,9 +117,13 @@ int main() {
 
                 sscanf(line, "%149[^\t] %149[^\t] %149[^\t\n]", empID, empName, empTitle);
 
-                if (strcasecmp(empName, empArray[i].name) == 0) {
+                if (strcasecmp(empName, nameArray[i]) == 0) {
                     //printf("3\n");
+                    empArray[i].isEmp = 1;
                     strcpy(empArray[i].empID, empID);
+                    strcpy(empArray[i].name, empName);
+                    strcpy(empArray[i].title, empTitle);
+                    
                     //empArray[i].empID = empID;  //set empID of employee to empID found in txt
                 }
 
@@ -114,10 +143,15 @@ int main() {
 
     fclose(info);
 
+    //
+    //free(titleArray);
+
 
     //test to see if empID gets transferred
     for (i = 0; i < numSearched; i++) {
-        printf("ID: %s\t Name: %s\t Title: %s\n", empArray[i].empID, empArray[i].name, empArray[i].title);  
+        if (empArray[i].isEmp == 1){
+            printf("ID: %s\t Name: %s\t Title: %s\n", empArray[i].empID, empArray[i].name, empArray[i].title);  
+        }
     }
 
 
