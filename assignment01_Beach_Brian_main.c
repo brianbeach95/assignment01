@@ -36,7 +36,12 @@ struct employees {
 
 //struct for threadA to return
 typedef struct  {
-    char x[32];
+    char basePay[32];
+    char otPay[32];
+    char otherPay[32];
+    char benefits[32];
+    char totalPay[32];
+    char totalPayBenefits[32];
 }structA;
 
 
@@ -55,11 +60,68 @@ void  *threadA(void * arg) {
     
     structA* sA = (structA *) malloc(sizeof(structA));
 
-    for(i = 0; i < num; ++i) {
-        strcpy(sA[i].x, input[i]);
-    } 
+     
 
-    
+    //employee information file
+    FILE *salary = fopen("employeeSalary.txt", "r");
+
+   
+
+    if (salary != NULL) {
+        char* empID;    //employee id
+        char* bp;       //basepay
+        char* ot;       //ot pay
+        char* other;    //other
+        char* ben;      //benfits
+        char* tp;       //total pay
+        char* tpben;    //total pay benefits
+
+
+        //for loop to go through each employee in array
+        for(i = 0; i < num; i++) {
+
+            //while loop to search the file
+            while(fgets(line, sizeof(line), salary)){
+
+                empID = malloc(32 * sizeof(char));
+                bp = malloc(32 * sizeof(char));
+                ot = malloc(32 * sizeof(char));
+                other = malloc(32 * sizeof(char)); 
+                ben = malloc(32 * sizeof(char));   
+                tp = malloc(32 * sizeof(char)); 
+                tpben = malloc(32 * sizeof(char)); 
+
+
+                sscanf(line, "%149[^\t] %149[^\t] %149[^\t] %149[^\t] %149[^\t] %149[^\t] %149[^\t\n]", empID, bp, ot, other, ben, tp, tpben);
+
+                if (strcasecmp(empID, input[i]) == 0) {
+                    strcpy(sA[i].basePay, bp);
+                    strcpy(sA[i].otPay, ot);
+                    strcpy(sA[i].otherPay, other);
+                    strcpy(sA[i].benefits, ben);
+                    strcpy(sA[i].totalPay, tp);
+                    strcpy(sA[i].totalPayBenefits, tpben);
+                }
+
+            }
+
+            //frees up malloc given variables for next round
+            free(empID);    
+            free(bp);
+            free(ot);
+            free(other);    
+            free(ben);
+            free(tp);
+            free(tpben);
+
+            //rewinds file to start search for next employee
+            rewind(salary);
+
+        }
+
+    }
+
+    fclose(salary);
 
     pthread_mutex_lock(&thread_lock);
     thread_in = 1;
@@ -151,7 +213,6 @@ int main() {
     
     menu(nameArray, titleArray, length);
 
-    printf("test");
 
     struct employees empArray[numSearched];
 
@@ -210,6 +271,9 @@ int main() {
     fclose(info);
    
 
+
+    
+
     pthread_t tidA;
     pthread_t tidB;
 
@@ -222,7 +286,15 @@ int main() {
     pthread_join(tidA, (void**) &a);
     pthread_join(tidB, (void**) &b);
 
+    
+    
 
+    for(i = 0; i < idTracker; i++) {
+        
+        printf("%s\t %s\t %s\t %s\t %s\t %s\n", a[i].basePay, a[i].otPay, a[i].otherPay, a[i].benefits, a[i].totalPay, a[i].totalPayBenefits);
+    }
+
+    
     //printf("Result from A thread: %s\n", a[0].x);
     //printf("Result from B thread: %d", b[0].y);
 
