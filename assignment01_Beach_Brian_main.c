@@ -26,30 +26,31 @@ int thread_in = 0;
 
 
 //struct for employee
-struct employees {
-    char empID[16];
-    char name[64];  //name of employee
-    char title[64]; //title of employee
+typedef struct{
+    char *empID;
+    char *name;  //name of employee
+    char *title; //title of employee
     int isEmp;      //bool for if is employee
-};
+    
+}employees;
 
 
 //struct for threadA to return
 typedef struct  {
-    char basePay[32];
-    char otPay[32];
-    char otherPay[32];
-    char benefits[32];
-    char totalPay[32];
-    char totalPayBenefits[32];
+    char *basePay;
+    char *otPay;
+    char *otherPay;
+    char *benefits;
+    char *totalPay;
+    char *totalPayBenefits;
 }structA;
 
 
 //struct for threadB to return
 typedef struct  {
-    char year[32];
-    char agency[32];
-    char status[32];
+    char *year;
+    char *agency;
+    char *status;
 }structB;
 
 
@@ -58,10 +59,15 @@ void  *threadA(void * arg) {
     int i;
 
     char **input = (char**) arg;
-    int num = sizeof(input) / sizeof(*input);
-    printf("%d/n", num);
+
+    int num = 0;
+    while (input[num] != NULL) {
+        ++num;
+    }
     
-    structA *sA = (structA *) malloc(sizeof(structA));
+   
+    
+    structA *sA = (structA *) malloc(num *sizeof(structA));
 
      //printf("A1");
 
@@ -100,6 +106,16 @@ void  *threadA(void * arg) {
 
                 if (strcasecmp(empID, input[i]) == 0) {
                     //printf("HELLO THERE");
+
+                   sA[i].basePay = malloc(32 * sizeof(char));
+                   sA[i].otPay = malloc(32 * sizeof(char));
+                   sA[i].otherPay = malloc(32 * sizeof(char));
+                   sA[i].benefits = malloc(32 * sizeof(char));
+                   sA[i].totalPay = malloc(32 * sizeof(char));
+                   sA[i].totalPayBenefits = malloc(32 * sizeof(char));
+
+
+
                     strcpy(sA[i].basePay, bp);
                     strcpy(sA[i].otPay, ot);
                     strcpy(sA[i].otherPay, other);
@@ -152,10 +168,13 @@ void  *threadB(void * arg) {
     int i;
     
     char **input = (char**) arg;
-    int num = sizeof(input) / sizeof(*input);
-    printf("%d/n", num);
+    int num = 0;
+    while (input[num] != NULL) {
+        ++num;
+    }
+    
 
-    structB* sB = (structB *) malloc(sizeof(structB));
+    structB* sB = (structB *) malloc(num *sizeof(structB));
 
 
     FILE *detail = fopen("employementDetail.txt", "r");
@@ -187,6 +206,9 @@ void  *threadB(void * arg) {
                 if (strcasecmp(empID, input[i]) == 0) {
 
                    // printf("HELLO B2");
+                   sB[i].year = malloc(32 * sizeof(char));
+                   sB[i].agency = malloc(32 * sizeof(char));
+                   sB[i].status = malloc(32 * sizeof(char));
                     
                    strcpy(sB[i].year, yr);
                     strcpy(sB[i].agency, agc);
@@ -278,7 +300,8 @@ int main() {
     //printf("AFTER MENU ");
 
 
-    struct employees empArray[numSearched];
+    employees* empArray = (employees *) malloc(numSearched *sizeof(employees));
+    //struct employees empArray[numSearched];
     //printf("AFTER EMPLOYEE STRUCT");
 
 
@@ -315,7 +338,12 @@ int main() {
                     strcpy(IDArray[idTracker], empID);
                     
                     ///////////////////////////////////////////////////
-                    //struct stuff
+                    //employee struct stuff
+                    empArray[idTracker].empID= malloc(32 * sizeof(char));
+                    empArray[idTracker].name = malloc(32 * sizeof(char));
+                    empArray[idTracker].title = malloc(32 * sizeof(char));
+
+
                     strcpy(empArray[idTracker].empID, empID);
                     strcpy(empArray[idTracker].name, empName);
                     strcpy(empArray[idTracker].title, empTitle);
@@ -348,40 +376,44 @@ int main() {
     structA* a;
     structB* b;
 
+
+
+
+for(i = 0; i < idTracker; i++) {
+    //printf("%s ", IDArray[i]);
+}
+
+
+
     pthread_create(&tidA, NULL, threadA, (void *)IDArray);
     pthread_create(&tidB, NULL, threadB, (void *)IDArray);
 
     pthread_join(tidA, (void**) &a);
     pthread_join(tidB, (void**) &b);
 
-    //printf("THREAD JOINED");
-    for (i = 0; i < numSearched; i++) {
-         
-        if (empArray[i].isEmp == 1){
-            //printf("ID: %s\t Name: %s\t Title: %s\n", empArray[i].empID, empArray[i].name, empArray[i].title);  
-        }
-    }
 
     
-    //printf("PRINT LOOP\n");
+    /*
     for(i = 0; i < idTracker; i++) {
         //printf("IN LOOP");
         printf("%s\t %s\t %s\n ", empArray[i].empID, empArray[i].name, empArray[i].title);
         printf("%s\t %s\t %s\t %s\t %s\t %s\n", a[i].basePay, a[i].otPay, a[i].otherPay, a[i].benefits, a[i].totalPay, a[i].totalPayBenefits);
         printf("%s\t %s\t %s\n", b[i].year, b[i].agency, b[i].status);
     }
+    */
 
-    for(i = 0; i < idTracker; i++) {
-       //printf("%s\t %s\t %s\t ", empArray[i].empID, empArray[i].name, empArray[i].title);
-        //printf("%s\t %s\t %s\t %s\t %s\t %s\t ", a[i].basePay, a[i].otPay, a[i].otherPay, a[i].benefits, a[i].totalPay, a[i].totalPayBenefits);
-        //printf("%s\t %s\t %s\n ", b[i].year, b[i].agency, b[i].status);
-    }
-
+   
+   
     
-    //printf("Result from A thread: %s\n", a[0].x);
-    //printf("Result from B thread: %d", b[0].y);
+    
 
-    pthread_exit(0);
+   /frees up allocated spaces for a and b structs
+    free(a);
+    free(b);
+    free(empArray);
+    
+
+    //pthread_exit(0);
     return 0;
 
 }
