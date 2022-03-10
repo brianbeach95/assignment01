@@ -20,6 +20,11 @@ int arrayNum = 10;      //num to initialize array / max amount that can be
 int numSearched = 0;    //int to count number of employees searched
 
 
+pthread_mutex_t thread_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t thread_cond = PTHREAD_COND_INITIALIZER;
+int thread_in = 0;
+
+
 //struct for employee
 struct employees {
     char empID[16];
@@ -27,6 +32,57 @@ struct employees {
     char title[64]; //title of employee
     int isEmp;      //bool for if is employee
 };
+
+
+
+void  *threadA(void * arg) {
+    int i;
+    //printf("got here\n");
+
+    char **input = (char**) arg;
+
+    int num = sizeof(input) / sizeof(input[0]);
+    
+    /*
+    for(i = 0; i < num; ++i) {
+        printf("%s\n", input[i]);
+    }
+    */
+    
+
+    pthread_mutex_lock(&thread_lock);
+    thread_in = 1;
+    pthread_cond_signal(&thread_cond);
+    pthread_mutex_unlock(&thread_lock);
+
+    //printf("after locks");
+    
+    //pthread_exit(0);
+}
+
+
+void  *threadB(void * arg) {
+    pthread_mutex_lock(&thread_lock);
+    while(thread_in == 0) {
+        pthread_cond_wait(&thread_cond, &thread_lock);
+    }
+    pthread_mutex_unlock(&thread_lock);
+
+    int i;
+    //printf("got here 2\n");
+    
+    char **input = (char**) arg;
+    int num = sizeof(input) / sizeof(input[0]);
+
+    /*
+    for(i = 0; i < 5; ++i) {
+        printf("%d\n", i);
+    }
+    */
+    //pthread_exit(0);
+}
+
+
 
 
 
@@ -44,13 +100,6 @@ void menu(char **name, char **title, int length) {
     //while loop to run while the user wants to search for employees
     while(strcasecmp(search, "yes") == 0) {
         //if the number searched is longer than length, multiply length by 2 and realloc the two arrays
-       /**
-        if(numSearched == length) {
-            length *= 2;
-            name = realloc(name, length );
-            title = realloc(title, length );
-        }
-        */
 
         printf("\n");
         printf("Enter employee name: ");
@@ -79,10 +128,13 @@ void menu(char **name, char **title, int length) {
 int main() {
     
     int i;  //used in for loop
-    int length = 2;
+    int length = 10;
+    int idTracker = 0;
 
     char **nameArray= (char**) malloc(length * sizeof(char*));
     char **titleArray = (char**) malloc(length * sizeof(char*));
+
+    char **IDArray = (char**) malloc(length * sizeof(char*));
     
     menu(nameArray, titleArray, length);
 
@@ -120,6 +172,12 @@ int main() {
                 if (strcasecmp(empName, nameArray[i]) == 0) {
                     //printf("3\n");
                     empArray[i].isEmp = 1;
+                    //id to pass through to threads/////////////////////
+                    IDArray[idTracker] = malloc(64 * sizeof(char));
+                    strcpy(IDArray[idTracker], empID);
+                    ++idTracker;
+                    ///////////////////////////////////////////////////
+                    //struct stuff
                     strcpy(empArray[i].empID, empID);
                     strcpy(empArray[i].name, empName);
                     strcpy(empArray[i].title, empTitle);
@@ -143,20 +201,40 @@ int main() {
 
     fclose(info);
 
-    //
-    //free(titleArray);
 
-
-    //test to see if empID gets transferred
+    /*test to see if empID gets transferred
     for (i = 0; i < numSearched; i++) {
         if (empArray[i].isEmp == 1){
             printf("ID: %s\t Name: %s\t Title: %s\n", empArray[i].empID, empArray[i].name, empArray[i].title);  
         }
     }
+    */
 
+   /*
+   int idTracker = 0;
+   for(i = 0; i < numSearched; i++) {
+       if (empArray[i].isEmp == 1){
+            strcpy(IDArray[idTracker], empArray[i].empID);
+            ++idTracker;
+        }
+   }
+   */
 
+    /*test if id array works
+    for(i = 0; i < idTracker; ++i) {
+        printf("%s\n", IDArray[i]);
+    }
+    */
 
+   printf("before p thread\n");
 
+    pthread_t tidA;
+    pthread_t tidB;
+
+    pthread_create(&tidA, NULL, threadA, (void *)IDArray);
+    pthread_create(&tidB, NULL, threadB, (void *)IDArray);
+
+    pthread_exit(0);
     return 0;
 
 }
