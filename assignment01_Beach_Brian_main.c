@@ -47,7 +47,9 @@ typedef struct  {
 
 //struct for threadB to return
 typedef struct  {
-    int y;
+    char year[32];
+    char agency[32];
+    char status[32];
 }structB;
 
 
@@ -56,11 +58,12 @@ void  *threadA(void * arg) {
     int i;
 
     char **input = (char**) arg;
-    int num = sizeof(input) / sizeof(input[0]);
+    int num = sizeof(input) / sizeof(*input);
+    printf("%d/n", num);
     
-    structA* sA = (structA *) malloc(sizeof(structA));
+    structA *sA = (structA *) malloc(sizeof(structA));
 
-     
+     //printf("A1");
 
     //employee information file
     FILE *salary = fopen("employeeSalary.txt", "r");
@@ -82,6 +85,7 @@ void  *threadA(void * arg) {
 
             //while loop to search the file
             while(fgets(line, sizeof(line), salary)){
+                //printf("A2");
 
                 empID = malloc(32 * sizeof(char));
                 bp = malloc(32 * sizeof(char));
@@ -95,6 +99,7 @@ void  *threadA(void * arg) {
                 sscanf(line, "%149[^\t] %149[^\t] %149[^\t] %149[^\t] %149[^\t] %149[^\t] %149[^\t\n]", empID, bp, ot, other, ben, tp, tpben);
 
                 if (strcasecmp(empID, input[i]) == 0) {
+                    //printf("HELLO THERE");
                     strcpy(sA[i].basePay, bp);
                     strcpy(sA[i].otPay, ot);
                     strcpy(sA[i].otherPay, other);
@@ -120,7 +125,8 @@ void  *threadA(void * arg) {
         }
 
     }
-
+    
+    //printf("A4");
     fclose(salary);
 
     pthread_mutex_lock(&thread_lock);
@@ -141,16 +147,72 @@ void  *threadB(void * arg) {
     }
     pthread_mutex_unlock(&thread_lock);
 
+    //printf("B1");
+
     int i;
     
     char **input = (char**) arg;
-    int num = sizeof(input) / sizeof(input[0]);
+    int num = sizeof(input) / sizeof(*input);
+    printf("%d/n", num);
 
     structB* sB = (structB *) malloc(sizeof(structB));
 
-    for(i = 0; i < 5; ++i) {
-        sB[i].y = i;
+
+    FILE *detail = fopen("employementDetail.txt", "r");
+
+    if (detail != NULL) {
+        
+        char* empID;
+        char* yr;
+        char* agc;
+        char* stat;
+
+        
+        //for loop to go through each employee in array
+        for(i = 0; i < num; i++) {
+
+            //while loop to search the file
+            while(fgets(line, sizeof(line), detail)){
+
+               // printf("B2");
+                
+                empID = malloc(32 * sizeof(char));
+                yr = malloc(32 * sizeof(char));
+                agc = malloc(32 * sizeof(char));
+                stat =  malloc(32 * sizeof(char));   
+
+
+                sscanf(line, "%149[^\t] %149[^\t] %149[^\t] %149[^\t\n]", empID, yr, agc, stat);
+
+                if (strcasecmp(empID, input[i]) == 0) {
+
+                   // printf("HELLO B2");
+                    
+                   strcpy(sB[i].year, yr);
+                    strcpy(sB[i].agency, agc);
+                    strcpy(sB[i].status, stat);
+                }
+
+            }
+
+         
+
+            //frees up malloc given variables for next round
+            free(empID);    
+            free(yr);
+            free(agc);
+            free(stat);
+
+            //rewinds file to start search for next employee
+            rewind(detail);
+
+        }
+
     }
+
+   //printf("B3");
+    fclose(detail);
+
 
     return (void*) sB;
 
@@ -213,8 +275,11 @@ int main() {
     
     menu(nameArray, titleArray, length);
 
+    //printf("AFTER MENU ");
+
 
     struct employees empArray[numSearched];
+    //printf("AFTER EMPLOYEE STRUCT");
 
 
     //employee information file
@@ -225,12 +290,16 @@ int main() {
         char* empName;
         char* empTitle;
 
+       //printf("M1");
+
 
         //for loop to go through each employee in array
         for(i = 0; i < numSearched; i++) {
 
             //while loop to search the file
             while(fgets(line, sizeof(line), info)){
+                //printf("M2");
+
                 empID = malloc(64 * sizeof(char));
                 empName = malloc(64 * sizeof(char));
                 empTitle = malloc(64 * sizeof(char));    
@@ -239,17 +308,18 @@ int main() {
                 sscanf(line, "%149[^\t] %149[^\t] %149[^\t\n]", empID, empName, empTitle);
 
                 if (strcasecmp(empName, nameArray[i]) == 0) {
-                    //printf("3\n");
-                    empArray[i].isEmp = 1;
+                    //printf("HELLO M3 ");
+                    empArray[idTracker].isEmp = 1;
                     //id to pass through to threads/////////////////////
                     IDArray[idTracker] = malloc(64 * sizeof(char));
                     strcpy(IDArray[idTracker], empID);
-                    ++idTracker;
+                    
                     ///////////////////////////////////////////////////
                     //struct stuff
-                    strcpy(empArray[i].empID, empID);
-                    strcpy(empArray[i].name, empName);
-                    strcpy(empArray[i].title, empTitle);
+                    strcpy(empArray[idTracker].empID, empID);
+                    strcpy(empArray[idTracker].name, empName);
+                    strcpy(empArray[idTracker].title, empTitle);
+                    ++idTracker;
                     
                     //empArray[i].empID = empID;  //set empID of employee to empID found in txt
                 }
@@ -270,9 +340,7 @@ int main() {
 
     fclose(info);
    
-
-
-    
+   // printf("M4");
 
     pthread_t tidA;
     pthread_t tidB;
@@ -286,12 +354,27 @@ int main() {
     pthread_join(tidA, (void**) &a);
     pthread_join(tidB, (void**) &b);
 
+    //printf("THREAD JOINED");
+    for (i = 0; i < numSearched; i++) {
+         
+        if (empArray[i].isEmp == 1){
+            //printf("ID: %s\t Name: %s\t Title: %s\n", empArray[i].empID, empArray[i].name, empArray[i].title);  
+        }
+    }
+
     
-    
+    //printf("PRINT LOOP\n");
+    for(i = 0; i < idTracker; i++) {
+        //printf("IN LOOP");
+        printf("%s\t %s\t %s\n ", empArray[i].empID, empArray[i].name, empArray[i].title);
+        printf("%s\t %s\t %s\t %s\t %s\t %s\n", a[i].basePay, a[i].otPay, a[i].otherPay, a[i].benefits, a[i].totalPay, a[i].totalPayBenefits);
+        printf("%s\t %s\t %s\n", b[i].year, b[i].agency, b[i].status);
+    }
 
     for(i = 0; i < idTracker; i++) {
-        
-        printf("%s\t %s\t %s\t %s\t %s\t %s\n", a[i].basePay, a[i].otPay, a[i].otherPay, a[i].benefits, a[i].totalPay, a[i].totalPayBenefits);
+       //printf("%s\t %s\t %s\t ", empArray[i].empID, empArray[i].name, empArray[i].title);
+        //printf("%s\t %s\t %s\t %s\t %s\t %s\t ", a[i].basePay, a[i].otPay, a[i].otherPay, a[i].benefits, a[i].totalPay, a[i].totalPayBenefits);
+        //printf("%s\t %s\t %s\n ", b[i].year, b[i].agency, b[i].status);
     }
 
     
