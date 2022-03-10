@@ -200,33 +200,7 @@ int main() {
     }
 
     fclose(info);
-
-
-    /*test to see if empID gets transferred
-    for (i = 0; i < numSearched; i++) {
-        if (empArray[i].isEmp == 1){
-            printf("ID: %s\t Name: %s\t Title: %s\n", empArray[i].empID, empArray[i].name, empArray[i].title);  
-        }
-    }
-    */
-
-   /*
-   int idTracker = 0;
-   for(i = 0; i < numSearched; i++) {
-       if (empArray[i].isEmp == 1){
-            strcpy(IDArray[idTracker], empArray[i].empID);
-            ++idTracker;
-        }
-   }
-   */
-
-    /*test if id array works
-    for(i = 0; i < idTracker; ++i) {
-        printf("%s\n", IDArray[i]);
-    }
-    */
-
-   printf("before p thread\n");
+   
 
     pthread_t tidA;
     pthread_t tidB;
