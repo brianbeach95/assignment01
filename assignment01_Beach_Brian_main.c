@@ -34,20 +34,31 @@ struct employees {
 };
 
 
+//struct for threadA to return
+typedef struct  {
+    char x[32];
+}structA;
 
+
+//struct for threadB to return
+typedef struct  {
+    int y;
+}structB;
+
+
+//thread a function
 void  *threadA(void * arg) {
     int i;
-    //printf("got here\n");
 
     char **input = (char**) arg;
-
     int num = sizeof(input) / sizeof(input[0]);
     
-    /*
+    structA* sA = (structA *) malloc(sizeof(structA));
+
     for(i = 0; i < num; ++i) {
-        printf("%s\n", input[i]);
-    }
-    */
+        strcpy(sA[i].x, input[i]);
+    } 
+
     
 
     pthread_mutex_lock(&thread_lock);
@@ -55,12 +66,12 @@ void  *threadA(void * arg) {
     pthread_cond_signal(&thread_cond);
     pthread_mutex_unlock(&thread_lock);
 
-    //printf("after locks");
+    return (void*) sA;
     
-    //pthread_exit(0);
 }
 
 
+//thread b function
 void  *threadB(void * arg) {
     pthread_mutex_lock(&thread_lock);
     while(thread_in == 0) {
@@ -69,17 +80,19 @@ void  *threadB(void * arg) {
     pthread_mutex_unlock(&thread_lock);
 
     int i;
-    //printf("got here 2\n");
     
     char **input = (char**) arg;
     int num = sizeof(input) / sizeof(input[0]);
 
-    /*
+    structB* sB = (structB *) malloc(sizeof(structB));
+
     for(i = 0; i < 5; ++i) {
-        printf("%d\n", i);
+        sB[i].y = i;
     }
-    */
-    //pthread_exit(0);
+
+    return (void*) sB;
+
+    
 }
 
 
@@ -142,11 +155,6 @@ int main() {
 
     struct employees empArray[numSearched];
 
-    /*TEST --- for loop to test if menu is working properly
-    for (i = 0; i < numSearched; i++) {
-        printf("Name: %s\t Title: %s\n", empArray[i].name, empArray[i].title);  
-    }
-    */
 
     //employee information file
     FILE *info = fopen("employeeInformation.txt", "r");
@@ -205,8 +213,18 @@ int main() {
     pthread_t tidA;
     pthread_t tidB;
 
+    structA* a;
+    structB* b;
+
     pthread_create(&tidA, NULL, threadA, (void *)IDArray);
     pthread_create(&tidB, NULL, threadB, (void *)IDArray);
+
+    pthread_join(tidA, (void**) &a);
+    pthread_join(tidB, (void**) &b);
+
+
+    //printf("Result from A thread: %s\n", a[0].x);
+    //printf("Result from B thread: %d", b[0].y);
 
     pthread_exit(0);
     return 0;
