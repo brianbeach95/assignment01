@@ -407,7 +407,7 @@ for(i = 0; i < idTracker; i++) {
     
     
 
-   /frees up allocated spaces for a and b structs
+   //frees up allocated spaces for a and b structs
     free(a);
     free(b);
     free(empArray);
